@@ -2,6 +2,53 @@
 
 **Release tag:** `v0.3-agent` · [← Phase 2](../phase-2-rag-hybrid-search/README.md) · [Back to roadmap](../../README.md) · [Next: Phase 4 →](../phase-4-evals-observability/README.md)
 
+## ▶️ Run It (code is in [`backend/`](../../backend) and [`frontend/`](../../frontend))
+
+The agent is on by default (`CHAT_MODE=agent`). Docker Compose is the same as Phase 2; the backend starts the
+MCP server ([`backend/mcp_server/darkstore.py`](../../backend/mcp_server/darkstore.py)) itself as a subprocess.
+
+```bash
+docker compose up --build
+```
+
+Try: *"Which dairy items expire this week and what is the SOP for them?"* (multi-step: MCP tool + documents),
+*"Which SKUs are below reorder level?"* (tool), attach a CSV or a photo with 📎 and ask about it (attachment / vision).
+
+**Web search (free):** either get free Tavily credits and set `WEB_SEARCH_PROVIDER=tavily` + `TAVILY_API_KEY`, or run
+SearXNG yourself:
+
+```bash
+docker compose --profile websearch up --build
+```
+
+Then set `WEB_SEARCH_PROVIDER=searxng` in `.env`.
+
+**Use the MCP server from any MCP client** (e.g. Claude Desktop, MCP Inspector):
+
+```bash
+cd backend && python -m mcp_server.darkstore          # stdio
+cd backend && python -m mcp_server.darkstore --http   # streamable HTTP on :8765
+```
+
+### What's Implemented
+
+| File | Purpose |
+|---|---|
+| `backend/app/services/agent.py` | **LangGraph** graph: `rewrite → plan → execute → grade → answer`, with a bounded retry from `grade` back to `rewrite` |
+| `backend/app/services/prompts.py` | Rewrite, planner (router), relevance grader and answer prompts |
+| `backend/mcp_server/darkstore.py` | **MCP server** (`MCPServer`, mcp SDK v2): `search_skus`, `get_stock`, `get_expiring_skus`, `get_low_stock`, `create_ticket` (local or Jira) over a seeded SQLite DB |
+| `backend/app/services/mcp_client.py` | **MCP client**: one stdio session for the app's lifetime; tools are discovered at startup and offered to the planner |
+| `backend/app/services/web_search.py` | Tavily or SearXNG (+ page text extraction with trafilatura) |
+| `backend/app/api/documents.py` | Chat attachments: `POST /api/chats/{id}/attachments`, promote to knowledge base |
+| `backend/app/api/chats.py` | Runs the agent and streams `step` / `citations` / `token` / `done` events; saves steps and citations |
+| `frontend/components/AgentSteps.tsx` | Live, collapsible "agent steps" panel |
+| `frontend/app/page.tsx` | 📎 attachments, suggestions, steps + citations per message |
+
+**How the planner stays safe:** the LLM planner returns JSON; steps are validated against the tools that actually
+exist (unknown tools are dropped), capped at `AGENT_MAX_STEPS`, and if the output is unusable a keyword planner takes
+over. Web pages, documents and attachments are wrapped in `<untrusted>` tags and the model is told never to follow
+instructions inside them. Attachments are indexed with the chat's id as their scope, so other chats can't retrieve them.
+
 ## Goal
 
 Turn the chat into an **agent** that decides on its own whether to **search docs (RAG)**, **search the web**, **read a file attached in chat**, **call a tool**, or **answer directly**. Add **query rewriting**, a **router**, **multi-step workflows**, and your own **MCP server**. The UI shows each agent step live.
@@ -130,10 +177,12 @@ class AgentState(TypedDict):
 
 | Event | Example payload |
 |---|---|
-| `step` | `{"node": "retrieve", "status": "started", "label": "Searching docs..."}` |
-| `tool_call` | `{"tool": "get_expiring_skus", "args": {"days": 7}}` |
-| `tool_result` | `{"tool": "get_expiring_skus", "summary": "12 SKUs found"}` |
-| `token` / `citations` / `done` | Same as earlier phases |
+| `step` | `{"id": 3, "kind": "tool", "label": "Calling tool get_expiring_skus...", "status": "running", "detail": "{\"days\": 7}"}`, then the same `id` with `"status": "done"` (or `"error"`) |
+| `citations` | `{"citations": [{"n": 1, "kind": "doc", "doc_name": "sop.pdf", "page": 2, ...}, {"n": 2, "kind": "web", "url": "..."}]}` |
+| `token` / `done` / `error` | Same as earlier phases |
+
+`kind` is one of `rewrite`, `plan`, `search`, `web`, `tool`, `grade`, `answer`, `error`, so tool calls and their
+results are both `step` events.
 
 ## Implementation Steps
 
@@ -156,14 +205,14 @@ class AgentState(TypedDict):
 
 ## Definition of Done / Demo
 
-- [ ] "Hi" is answered directly (no retrieval)
-- [ ] An SOP question triggers RAG with citations
-- [ ] "How many dairy SKUs expire this week?" calls the MCP inventory tool
-- [ ] "Which SKUs expire this week and what's the SOP for them?" runs a multi-step plan
+- [x] "Hi" is answered directly (no retrieval)
+- [x] An SOP question triggers RAG with citations
+- [x] "How many dairy SKUs expire this week?" calls the MCP inventory tool
+- [x] "Which SKUs expire this week and what's the SOP for them?" runs a multi-step plan
 - [ ] "Latest FSSAI expiry-label rules?" triggers web search with URL citations
-- [ ] Attaching a stock CSV and asking "which items are below reorder level?" works without adding it to the knowledge base
+- [x] Attaching a stock CSV and asking "which items are below reorder level?" works without adding it to the knowledge base
 - [ ] Attaching a shelf photo and asking about it works (vision)
-- [ ] UI shows every step live
+- [x] UI shows every step live
 
 ## Interview Talking Points
 

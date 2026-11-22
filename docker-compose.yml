@@ -14,15 +14,41 @@ services:
       interval: 3s
       retries: 20
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false" # local dev only; enable security for anything public
+      xpack.ml.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      retries: 30
+
   backend:
     build: ./backend
     env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://chat:chat@postgres:5432/chat
+      SEARCH_BACKEND: elasticsearch
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      SEARXNG_URL: http://searxng:8080
+      TIKA_URL: http://tika:9998
+      UPLOAD_DIR: /app/data/uploads
+      DARKSTORE_DB: /app/data/darkstore.db
     ports:
       - "8000:8000"
+    volumes:
+      - appdata:/app/data
     depends_on:
       postgres:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
 
   frontend:
@@ -35,5 +61,25 @@ services:
     depends_on:
       - backend
 
+  # Optional: free self-hosted web search. Start with `docker compose --profile websearch up`
+  # and set WEB_SEARCH_PROVIDER=searxng in .env.
+  searxng:
+    image: searxng/searxng:latest
+    profiles: ["websearch"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+
+  # Optional: Apache Tika for parsing. Start with `docker compose --profile tika up`
+  # and set PARSER=tika in .env.
+  tika:
+    image: apache/tika:latest
+    profiles: ["tika"]
+    ports:
+      - "9998:9998"
+
 volumes:
   pgdata:
+  esdata:
+  appdata:

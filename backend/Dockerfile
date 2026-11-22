@@ -7,9 +7,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && mkdir -p /app/data && chown -R appuser /app/data
 USER appuser
 
 EXPOSE 8000
-# Apply DB migrations, then start the API.
+# Apply DB migrations, then start the API (it starts the MCP server as a subprocess).
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

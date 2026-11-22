@@ -8,9 +8,28 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        search_backend: [memory, elasticsearch]
+    services:
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          xpack.ml.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd "curl -fs http://localhost:9200/_cluster/health"
+          --health-interval 10s --health-retries 30
     defaults:
       run:
         working-directory: backend
+    env:
+      TEST_SEARCH_BACKEND: ${{ matrix.search_backend }}
+      ELASTICSEARCH_URL: http://localhost:9200
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

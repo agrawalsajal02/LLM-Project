@@ -1,0 +1,3 @@
+# Optional: run embeddings and the reranker locally on CPU (free, no API limits).
+# Large download (PyTorch). Install with: pip install -r requirements-local-models.txt
+sentence-transformers==6.3.0

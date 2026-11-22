@@ -20,6 +20,8 @@ class MessageOut(BaseModel):
     id: uuid.UUID
     role: Literal["user", "assistant"]
     content: str
+    citations: list[dict] | None = None
+    steps: list[dict] | None = None
     created_at: datetime
 
 
@@ -33,3 +35,30 @@ class ConversationUpdate(BaseModel):
 
 class MessageIn(BaseModel):
     content: str = Field(min_length=1, max_length=20_000)
+
+
+class DocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    filename: str
+    content_type: str
+    size_bytes: int
+    kind: str
+    conversation_id: uuid.UUID | None
+    status: str
+    error: str | None
+    chunk_count: int
+    page_count: int | None
+    created_at: datetime
+
+
+class SearchHitOut(BaseModel):
+    doc_id: str
+    doc_name: str
+    page: int | None
+    text: str
+    rrf_score: float
+    bm25_rank: int | None
+    knn_rank: int | None
+    rerank_score: float | None

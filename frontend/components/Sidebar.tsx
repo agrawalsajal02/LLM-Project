@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import type { Conversation } from "@/lib/api";
 
 type Props = {
@@ -16,6 +18,9 @@ export default function Sidebar({ chats, activeId, onSelect, onNew, onDelete }: 
       <button className="new-chat" onClick={onNew}>
         + New chat
       </button>
+      <Link href="/documents" className="nav-link">
+        📄 Knowledge base
+      </Link>
       <nav className="chat-list">
         {chats.length === 0 && <p className="muted">No chats yet</p>}
         {chats.map((c) => (

@@ -1,0 +1,10 @@
+# Minimal SearXNG config for the agent's web search (JSON API enabled).
+use_default_settings: true
+server:
+  secret_key: "change-me-to-a-random-string"
+  limiter: false
+  bind_address: "0.0.0.0"
+search:
+  formats:
+    - html
+    - json

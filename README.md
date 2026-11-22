@@ -198,8 +198,8 @@ flowchart LR
 | Phase | Tag | Status |
 |---|---|---|
 | 1. Streaming chat | `v0.1-chat` | ✅ code ready |
-| 2. RAG + hybrid search | `v0.2-rag` | ⬜ |
-| 3. Agent + workflows | `v0.3-agent` | ⬜ |
+| 2. RAG + hybrid search | `v0.2-rag` | ✅ code ready |
+| 3. Agent + workflows | `v0.3-agent` | ✅ code ready |
 | 4. Evals + observability | `v0.4-evals` | ⬜ |
 | 5. Self-hosted model | `v0.5-selfhost` | ⬜ |
 | 6. Production-grade | `v1.0` | ⬜ |

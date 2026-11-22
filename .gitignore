@@ -17,3 +17,6 @@ frontend/next-env.d.ts
 
 # OS
 .DS_Store
+
+# Runtime data (uploads, local search index, dark-store DB)
+backend/data/

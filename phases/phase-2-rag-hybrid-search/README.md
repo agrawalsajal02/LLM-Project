@@ -2,6 +2,50 @@
 
 **Release tag:** `v0.2-rag` · [← Phase 1](../phase-1-streaming-chat/README.md) · [Back to roadmap](../../README.md) · [Next: Phase 3 →](../phase-3-agent-workflows/README.md)
 
+## ▶️ Run It (code is in [`backend/`](../../backend) and [`frontend/`](../../frontend))
+
+Phase 2 adds **Elasticsearch** to Docker Compose and a **Knowledge base** page in the UI.
+
+```bash
+cp .env.example .env   # set GEMINI_API_KEY (used for answers and embeddings)
+docker compose up --build
+```
+
+Open http://localhost:3000/documents, upload a PDF/DOCX/TXT/MD, wait for **ready**, then ask about it in the chat.
+To see Phase 2 on its own (always search the docs, no agent), set `CHAT_MODE=rag`.
+
+**No API key / low RAM?** Each part can run free and locally:
+
+| Setting | Options |
+|---|---|
+| `EMBEDDING_PROVIDER` | `gemini` (free tier) · `local` (bge-small on CPU: `pip install -r requirements-local-models.txt`) · `fake` (tests) |
+| `SEARCH_BACKEND` | `elasticsearch` · `memory` (pure-Python BM25 + vectors saved to a JSON file, no extra service) |
+| `RERANKER` | `none` · `local` (bge-reranker cross-encoder on CPU) |
+| `PARSER` | `local` (pypdf / python-docx) · `tika` (`docker compose --profile tika up`) |
+
+> Changing the embedding provider or `EMBEDDING_DIMS` changes the vector size: delete the `chunks` index (`curl -XDELETE localhost:9200/chunks`) and re-upload.
+
+**Tests** (in-memory search, fake model; add `TEST_SEARCH_BACKEND=elasticsearch` to run them against a real ES):
+
+```bash
+cd backend && pytest -q
+```
+
+### What's Implemented
+
+| File | Purpose |
+|---|---|
+| `backend/app/services/parsing.py` | PDF (per page), DOCX (text + tables), TXT/MD, CSV/Excel → text sections; optional Tika |
+| `backend/app/services/chunking.py` | Recursive splitter (paragraph → line → sentence → word) with overlap; chunks never cross pages |
+| `backend/app/services/embeddings.py` | Gemini / local sentence-transformers / fake hashing embedder behind one interface |
+| `backend/app/services/search_store.py` | `ElasticsearchStore` (BM25 `match` + `dense_vector` kNN, scope filter) and `MemoryStore` |
+| `backend/app/services/retrieval.py` | Hybrid search: BM25 + kNN in parallel → **RRF** in Python (works on any ES license) → optional reranker |
+| `backend/app/services/ingestion.py` | Upload → parse → chunk → embed → bulk index, in a background task; status `processing/ready/failed` |
+| `backend/app/api/documents.py` | Upload/list/delete docs, serve the original file (for citation links), `/api/search` debug endpoint |
+| `backend/alembic/versions/0002_*` | `documents` table, `citations` + `steps` columns on messages |
+| `frontend/app/documents/page.tsx` | Knowledge base page: drag-and-drop upload, live status, hybrid-search tester showing BM25/kNN/RRF |
+| `frontend/components/MessageBubble.tsx` | Citation chips; `[n]` in the answer links to the PDF page or web page |
+
 ## Goal
 
 Let users **upload documents (PDF/DOCX)** and ask questions about them. Retrieval combines **keyword search (BM25)** and **vector search (kNN)**, merged with **Reciprocal Rank Fusion (RRF)**. Answers show **citations**.
@@ -120,9 +164,9 @@ RRF score for a document: `Σ 1 / (k + rank_i)`. If your ES license doesn't incl
 
 ## Definition of Done / Demo
 
-- [ ] Upload a PDF and see it become "ready"
-- [ ] Ask a question and get an answer with citations to doc + page
-- [ ] `/api/search` shows BM25, kNN and fused ranks
+- [x] Upload a PDF and see it become "ready"
+- [x] Ask a question and get an answer with citations to doc + page
+- [x] `/api/search` shows BM25, kNN and fused ranks
 - [ ] Questions outside the docs get "I couldn't find this in your documents"
 
 ## Interview Talking Points
