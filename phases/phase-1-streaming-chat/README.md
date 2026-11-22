@@ -2,6 +2,62 @@
 
 **Release tag:** `v0.1-chat` · [← Back to roadmap](../../README.md) · [Next: Phase 2 →](../phase-2-rag-hybrid-search/README.md)
 
+## ▶️ Run It (code is in [`backend/`](../../backend) and [`frontend/`](../../frontend))
+
+Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey). No key yet? Set `LLM_PROVIDER=fake` to try the app with a canned streaming reply.
+
+**Option A: Docker Compose (everything in one command)**
+
+```bash
+cp .env.example .env   # then put your GEMINI_API_KEY in .env
+docker compose up --build
+```
+
+Open http://localhost:3000 (API docs at http://localhost:8000/docs).
+
+**Option B: run locally for development**
+
+```bash
+docker compose up -d postgres
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp ../.env.example .env   # add GEMINI_API_KEY
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+**Tests** (SQLite + fake model, no Postgres or API key needed):
+
+```bash
+cd backend && pytest -q
+```
+
+### What's Implemented
+
+| File | Purpose |
+|---|---|
+| `backend/app/main.py` | FastAPI app, CORS, `/health` |
+| `backend/app/config.py` | Settings from env / `.env` |
+| `backend/app/models.py` | `Conversation`, `Message` tables |
+| `backend/alembic/` | Migrations (run automatically in Docker) |
+| `backend/app/services/llm.py` | `GeminiClient` (streaming) + `FakeClient`, behind one interface |
+| `backend/app/services/chat.py` | History window, saving messages, auto-title |
+| `backend/app/api/chats.py` | REST endpoints + SSE streaming; saves partial replies on stop/disconnect |
+| `backend/tests/` | API tests: CRUD, streaming, history, error event |
+| `frontend/lib/api.ts` | API client + SSE stream parser over `fetch` |
+| `frontend/app/page.tsx` | Chat page: streaming, stop, new chat, reopen chats |
+| `frontend/components/` | Sidebar and Markdown message bubbles |
+| `.github/workflows/ci.yml` | Runs backend tests and frontend build on every push/PR |
+
 ## Goal
 
 Build a ChatGPT-like chat app where answers **stream token by token**, conversations are **saved**, and the user can start a **new chat** or reopen **old chats**.
@@ -104,10 +160,10 @@ docker-compose.yml
 
 ## Definition of Done / Demo
 
-- [ ] Answer streams token by token in the UI
-- [ ] Reloading the page keeps the conversation
-- [ ] Sidebar shows old chats; clicking one reopens it
-- [ ] "New chat" works; stop button cancels the stream
+- [x] Answer streams token by token in the UI
+- [x] Reloading the page keeps the conversation
+- [x] Sidebar shows old chats; clicking one reopens it
+- [x] "New chat" works; stop button cancels the stream
 
 ## Interview Talking Points
 

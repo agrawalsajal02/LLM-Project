@@ -197,7 +197,7 @@ flowchart LR
 
 | Phase | Tag | Status |
 |---|---|---|
-| 1. Streaming chat | `v0.1-chat` | ⬜ |
+| 1. Streaming chat | `v0.1-chat` | ✅ code ready |
 | 2. RAG + hybrid search | `v0.2-rag` | ⬜ |
 | 3. Agent + workflows | `v0.3-agent` | ⬜ |
 | 4. Evals + observability | `v0.4-evals` | ⬜ |
