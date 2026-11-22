@@ -67,7 +67,7 @@ flowchart LR
 {"id": "q002", "question": "How many dairy SKUs expire this week?", "ground_truth": "Answer from inventory tool", "expected_route": "tool", "expected_tool": "get_expiring_skus"}
 ```
 
-Include easy, hard, multi-hop, out-of-scope ("should say I don't know") and adversarial (prompt-injection) questions.
+Include web-search questions (check URL citations and that internal docs are preferred when they have the answer), attachment questions, easy, hard, multi-hop, out-of-scope ("should say I don't know") and adversarial (prompt-injection) questions.
 
 ## Implementation Steps
 
@@ -77,7 +77,7 @@ Include easy, hard, multi-hop, out-of-scope ("should say I don't know") and adve
 4. GitHub Actions workflow: run evals on PR, compare with `main`, fail on regression, comment results.
 5. Add Langfuse (self-hosted) and instrument every node/LLM call; record tokens and cost.
 6. Grafana dashboard for latency, errors, cost (via OTel/Prometheus).
-7. Add Presidio masking on input and logs; LLM Guard injection scanner on input and retrieved chunks.
+7. Add Presidio masking on input and logs; LLM Guard injection scanner on input, retrieved chunks, **web pages** and **chat attachments**.
 8. Add 👍/👎 feedback in UI → Langfuse score.
 
 ## Key Concepts to Learn

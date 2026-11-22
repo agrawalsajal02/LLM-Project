@@ -94,14 +94,18 @@ flowchart LR
 - The agent decides on its own whether to run RAG, call a tool, or answer directly.
 - Query rewriting, a router, and multi-step workflows.
 - Build your own **MCP server** (e.g. a DB or Jira tool) and have the agent call it through an MCP client.
-- Show the agent's steps in the UI ("Searching docs...", "Calling tool...").
+- **Web search tool:** the agent searches the internet when the answer isn't in the docs or needs fresh info (prices, news, regulations), reads the top pages and cites the URLs.
+- **File upload in chat:** attach a file (PDF, DOCX, CSV/Excel, image) to a message and ask about it right away. The file is parsed and indexed only for that conversation; CSV/Excel can be answered with a pandas tool.
+- Show the agent's steps in the UI ("Searching docs...", "Searching the web...", "Reading attachment...", "Calling tool...").
 
 **Tools**
 - LLM tool/function calling (Gemini function calling or LangChain tools)
 - **LangGraph** for the workflow graph
 - **MCP Python SDK** (`mcp` / `FastMCP`) for the server and client
+- Web search: **Tavily** API (built for LLM agents), or self-hosted **SearXNG**; page reading with `trafilatura` / `httpx`
+- Chat attachments: FastAPI `UploadFile`, MinIO/S3 for file storage, `unstructured` / Tika for parsing, `pandas` for spreadsheets, Gemini vision for images
 
-**Demo:** Ask "How many SKUs expire this week and what is the SOP for them?" and watch the agent query the DB tool, search docs, and combine the results.
+**Demo:** Ask "How many SKUs expire this week and what is the SOP for them?" and watch the agent query the DB tool, search docs, and combine the results. Ask "What are the latest FSSAI rules on expiry labels?" to see web search with URL citations, and attach a stock CSV to ask "Which items are below reorder level?"
 
 ---
 
@@ -155,6 +159,7 @@ flowchart LR
   - Roles such as `admin`, `manager`, `operator` and `viewer`, scoped per tenant.
   - API-level permissions (e.g. only `admin`/`manager` can upload or delete docs, only `admin` can manage users and models).
   - **Document-level access in RAG:** each chunk stores `tenant_id` and `allowed_roles`; Elasticsearch queries add a filter so retrieval never returns chunks the user is not allowed to see.
+  - **Feature access by role:** e.g. web search and chat attachments allowed for `operator` and above; file size/type limits per role.
   - **Tool-level access for the agent:** MCP tools declare required roles (e.g. a write-to-DB tool only for `manager`), checked before every tool call.
   - Audit log of who accessed or changed what.
 - **Rate limiting.**

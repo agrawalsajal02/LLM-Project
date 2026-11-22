@@ -38,6 +38,8 @@ Make the system safe and scalable for real users: **authentication**, **multi-te
 | Upload / delete documents | ✅ | ✅ | ❌ | ❌ |
 | Read restricted documents | ✅ | ✅ | per doc | ❌ |
 | Read-only tools (`get_stock`, `get_expiring_skus`) | ✅ | ✅ | ✅ | ❌ |
+| Web search | ✅ | ✅ | ✅ | ❌ |
+| Attach files in chat | ✅ | ✅ | ✅ (≤10 MB) | ❌ |
 | Write tools (`create_ticket`, update DB) | ✅ | ✅ | ❌ | ❌ |
 | Manage users and roles | ✅ | ❌ | ❌ | ❌ |
 | Switch models / view costs | ✅ | ❌ | ❌ | ❌ |
@@ -100,6 +102,8 @@ flowchart LR
 | **Docker** | Container images for API, workers, MCP server, frontend | Multi-stage builds, non-root user |
 | **Kubernetes** (+ Helm) | Deploys everything; autoscaling with HPA | Start with kind/minikube, then a managed cluster (GKE/EKS) |
 | **GitHub Actions** | CI: lint, tests, evals; CD: build, push images, deploy | Environments for staging and production |
+| **MinIO / S3** | Tenant-scoped storage for uploads and chat attachments | Prefix per tenant, signed URLs, lifecycle rule to expire chat attachments |
+| **ClamAV** | Virus scan of uploaded files before parsing | Run as a sidecar/worker step |
 | **Secrets management** | K8s Secrets / External Secrets / Vault | Never commit API keys |
 
 ## Semantic Cache Flow
@@ -117,6 +121,8 @@ flowchart LR
 | Per user | 20 requests/min, 100K tokens/day |
 | Per tenant | 500 requests/min |
 | Upload | 10 files/hour for `manager` |
+| Web search | 30 searches/hour per user (paid API cost) |
+| Chat attachments | 20 files/day per user, max size by role |
 
 Return `429 Too Many Requests` with a `Retry-After` header.
 
