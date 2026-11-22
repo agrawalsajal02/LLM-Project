@@ -7,6 +7,15 @@ The plan has **6 phases**. Each phase ends with a **working, demo-able deliverab
 
 ---
 
+## Phase Guides
+
+1. [Phase 1](phases/phase-1-streaming-chat/README.md)
+2. [Phase 2](phases/phase-2-rag-hybrid-search/README.md)
+3. [Phase 3](phases/phase-3-agent-workflows/README.md)
+4. [Phase 4](phases/phase-4-evals-observability/README.md)
+5. [Phase 5](phases/phase-5-self-hosted-models/README.md)
+6. [Phase 6](phases/phase-6-production-grade/README.md)
+
 ## Tech Stack at a Glance
 
 | Layer | Choice |
@@ -41,6 +50,8 @@ flowchart LR
 
 ## Phase 1 — ChatGPT-style Basic Chat (Streaming)
 
+📄 **Detailed guide:** [phases/phase-1-streaming-chat/README.md](phases/phase-1-streaming-chat/README.md)
+
 **Build**
 - Chat UI where tokens stream live.
 - Conversation history, "New chat" button, and a list of past chats.
@@ -56,6 +67,8 @@ flowchart LR
 ---
 
 ## Phase 2 — RAG + Hybrid Search
+
+📄 **Detailed guide:** [phases/phase-2-rag-hybrid-search/README.md](phases/phase-2-rag-hybrid-search/README.md)
 
 **Build**
 - Upload documents (PDF/DOCX). The backend chunks and embeds them and stores them in Elasticsearch.
@@ -75,6 +88,8 @@ flowchart LR
 
 ## Phase 3 — Agent + Workflows
 
+📄 **Detailed guide:** [phases/phase-3-agent-workflows/README.md](phases/phase-3-agent-workflows/README.md)
+
 **Build**
 - The agent decides on its own whether to run RAG, call a tool, or answer directly.
 - Query rewriting, a router, and multi-step workflows.
@@ -91,6 +106,8 @@ flowchart LR
 ---
 
 ## Phase 4 — Evals + Observability
+
+📄 **Detailed guide:** [phases/phase-4-evals-observability/README.md](phases/phase-4-evals-observability/README.md)
 
 > In a portfolio, this phase is what sets you apart the most.
 
@@ -110,6 +127,8 @@ flowchart LR
 
 ## Phase 5 — Self-Host an Open-Weight Model
 
+📄 **Detailed guide:** [phases/phase-5-self-hosted-models/README.md](phases/phase-5-self-hosted-models/README.md)
+
 **Build**
 - Use your own hosted model in place of Gemini.
 - A **model gateway** so the model can be switched through config, with **fallback** to another model when one fails.
@@ -127,6 +146,8 @@ flowchart LR
 ---
 
 ## Phase 6 — Make It Production-Grade
+
+📄 **Detailed guide:** [phases/phase-6-production-grade/README.md](phases/phase-6-production-grade/README.md)
 
 **Build**
 - Auth and a **multi-tenant** setup (each user's docs kept separate).
