@@ -7,6 +7,8 @@ The plan has **6 phases**. Each phase ends with a **working, demo-able deliverab
 
 ---
 
+> 💸 **On a budget?** See the [Free / Low-Budget Guide](FREE_TIER_GUIDE.md): every phase can be built and deployed for $0.
+
 ## Phase Guides
 
 1. [Phase 1](phases/phase-1-streaming-chat/README.md)
