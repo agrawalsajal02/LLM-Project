@@ -23,7 +23,7 @@ The plan has **6 phases**. Each phase ends with a **working, demo-able deliverab
 
 ```mermaid
 flowchart LR
-    UI[Next.js Chat UI] -- SSE --> API[FastAPI Gateway<br/>Auth · Rate limit · Guardrails]
+    UI[Next.js Chat UI] -- SSE --> API[FastAPI Gateway<br/>Auth · RBAC · Rate limit · Guardrails]
     API --> CACHE[(Redis<br/>Semantic cache)]
     API --> AGENT[LangGraph Agent<br/>Router · Query rewrite]
     AGENT --> RAG[Hybrid Retriever<br/>BM25 + kNN + RRF + Reranker]
@@ -130,6 +130,12 @@ flowchart LR
 
 **Build**
 - Auth and a **multi-tenant** setup (each user's docs kept separate).
+- **RBAC (Role-Based Access Control):**
+  - Roles such as `admin`, `manager`, `operator` and `viewer`, scoped per tenant.
+  - API-level permissions (e.g. only `admin`/`manager` can upload or delete docs, only `admin` can manage users and models).
+  - **Document-level access in RAG:** each chunk stores `tenant_id` and `allowed_roles`; Elasticsearch queries add a filter so retrieval never returns chunks the user is not allowed to see.
+  - **Tool-level access for the agent:** MCP tools declare required roles (e.g. a write-to-DB tool only for `manager`), checked before every tool call.
+  - Audit log of who accessed or changed what.
 - **Rate limiting.**
 - **Semantic cache** (similar questions get a cached answer).
 - **Async ingestion pipeline.**
@@ -137,11 +143,12 @@ flowchart LR
 
 **Tools**
 - Auth: Keycloak, or FastAPI security with OAuth2/JWT
+- RBAC: Keycloak realm/client roles in JWT claims, enforced with FastAPI dependencies (`Depends(require_role(...))`); optionally Casbin or OpenFGA for fine-grained policies
 - Redis (semantic cache + rate limiting, e.g. `slowapi` / RedisVL)
 - Kafka (ingestion queue, `aiokafka`), or Celery workers
 - Docker, Kubernetes, GitHub Actions
 
-**Demo:** Two users log in and see only their own docs; a burst of requests gets rate-limited; a repeated question returns instantly from cache; it all runs on Kubernetes.
+**Demo:** Two users log in and see only their own docs; a `viewer` cannot upload docs or trigger write tools, and asking about a restricted doc returns no citations from it; a burst of requests gets rate-limited; a repeated question returns instantly from cache; it all runs on Kubernetes.
 
 ---
 
